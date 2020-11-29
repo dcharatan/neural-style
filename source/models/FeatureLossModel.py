@@ -3,6 +3,9 @@ import torch.nn as nn
 import torchvision.models as models
 from typing import List, Tuple
 
+# Uncomment this if VGG16 download does not work
+# import torchvision.models
+# from torchvision.models.vgg import model_urls
 
 class FeatureLossModel(nn.Module):
     """This model is based on VGG16. However, instead of returning VGG16's
@@ -26,6 +29,9 @@ class FeatureLossModel(nn.Module):
         to refer to feature layers in the paper.
         """
         super(FeatureLossModel, self).__init__()
+
+        # Uncomment this if VGG16 download does not work
+        # model_urls['vgg16'] = model_urls['vgg16'].replace('https://', 'http://')
 
         # Load a pretrained VGG16 network with frozen parameters.
         self.vgg16 = models.vgg16(pretrained=True)
