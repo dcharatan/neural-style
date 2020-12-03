@@ -7,36 +7,31 @@ from typing import Optional
 class TransposeConvolutionBlock(nn.Module):
     """This is just a sequence of transpose convolution, batch normalization and
     ReLU.
+    ref: http://distill.pub/2016/deconv-checkerboard/
     """
 
-    stride: int
-    conv: nn.ConvTranspose2d
-    bn: nn.BatchNorm2d
-    relu: Optional[nn.ReLU]
+    upsample: int
+    reflection_pad: nn.ReflectionPad2d
+    conv2d: nn.ConvTranspose2d
 
-    def __init__(
-        self,
-        in_channels: int,
+    def __init__(self, in_channels: int,
         out_channels: int,
-        filter_size: int,
-        stride: int,
-        include_relu: bool = True,
-    ) -> None:
+        kernel_size: int,
+        stride: int, 
+        upsample=None)-> None:
+
         super(TransposeConvolutionBlock, self).__init__()
-        self.stride = stride
-        self.conv = nn.ConvTranspose2d(
-            in_channels,
-            out_channels,
-            filter_size,
-            stride,
-            filter_size // 2,  # Keep the image size the same.
-        )
-        self.bn = nn.BatchNorm2d(out_channels)
-        self.relu = nn.ReLU() if include_relu else None
+        self.upsample = upsample
+        if upsample:
+            self.upsample_layer = torch.nn.Upsample(scale_factor=upsample)
+        reflection_padding = kernel_size // 2
+        self.reflection_pad = torch.nn.ReflectionPad2d(reflection_padding)
+        self.conv2d = torch.nn.Conv2d(in_channels, out_channels, kernel_size, stride)
 
     def forward(self, image: torch.Tensor):
-        output_size = np.array(image.shape)
-        output_size[2:4] *= self.stride
-        conv = self.conv(image, output_size=output_size)
-        bn = self.bn(conv)
-        return self.relu(bn) if self.relu is not None else bn
+        if self.upsample:
+            image = self.upsample_layer(image)
+        pad = self.reflection_pad(image)
+        conv = self.conv2d(pad)
+
+        return conv

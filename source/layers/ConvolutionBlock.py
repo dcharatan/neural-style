@@ -2,29 +2,19 @@ import torch
 import torch.nn as nn
 
 
-class ConvolutionBlock(nn.Module):
+class ConvolutionBlock(torch.nn.Module):
     """This is just a sequence of convolution, batch normalization and ReLU."""
 
-    conv: nn.Conv2d
-    bn: nn.BatchNorm2d
-    relu: nn.ReLU
+    reflection_pad: nn.ReflectionPad2d
+    conv2d: nn.Conv2d
 
-    def __init__(
-        self, in_channels: int, out_channels: int, filter_size: int, stride: int
-    ) -> None:
+    def __init__(self, in_channels, out_channels, kernel_size, stride):
         super(ConvolutionBlock, self).__init__()
-        self.conv = nn.Conv2d(
-            in_channels,
-            out_channels,
-            filter_size,
-            stride,
-            filter_size // 2,  # Keep the image size the same.
-            padding_mode="reflect",
-        )
-        self.bn = nn.BatchNorm2d(out_channels)
-        self.relu = nn.ReLU()
+        reflection_padding = kernel_size // 2
+        self.reflection_pad = torch.nn.ReflectionPad2d(reflection_padding)
+        self.conv2d = torch.nn.Conv2d(in_channels, out_channels, kernel_size, stride)
 
     def forward(self, image: torch.Tensor):
-        conv = self.conv(image)
-        bn = self.bn(conv)
-        return self.relu(bn)
+        pad = self.reflection_pad(image)
+        conv = self.conv2d(pad)
+        return conv

@@ -1,38 +1,32 @@
 import torch
 import torch.nn as nn
+from .ConvolutionBlock import ConvolutionBlock
 
-
-class ResidualBlock(nn.Module):
+class ResidualBlock(torch.nn.Module):
     """This is a residual block as defined in "Perceptual Losses for Real-Time
     Style Transfer and Super-Resolution: Supplementary Material" by Johnson et
     al. See https://cs.stanford.edu/people/jcjohns/papers/fast-style/fast-style-supp.pdf
     """
 
-    conv1: nn.Conv2d
-    bn1: nn.BatchNorm2d
+    conv1: ConvolutionBlock
+    in1: nn.InstanceNorm2d
     relu: nn.ReLU
-    conv2: nn.Conv2d
-    bn2: nn.BatchNorm2d
+    conv2: ConvolutionBlock
+    in2: nn.InstanceNorm2d
+
 
     def __init__(self, num_channels: int) -> None:
         super(ResidualBlock, self).__init__()
-        self.conv1 = nn.Conv2d(
-            num_channels, num_channels, 3, 1, 1, padding_mode="reflect"
-        )
-        self.bn1 = nn.BatchNorm2d(num_channels)
-        self.relu = nn.ReLU()
-        self.conv2 = nn.Conv2d(
-            num_channels, num_channels, 3, 1, 1, padding_mode="reflect"
-        )
-        self.bn2 = nn.BatchNorm2d(num_channels)
+        self.conv1 = ConvolutionBlock(num_channels, num_channels, kernel_size=3, stride=1)
+        self.in1 = torch.nn.InstanceNorm2d(num_channels, affine=True)
+        self.conv2 = ConvolutionBlock(num_channels, num_channels, kernel_size=3, stride=1)
+        self.in2 = torch.nn.InstanceNorm2d(num_channels, affine=True)
+        self.relu = torch.nn.ReLU()
 
     def forward(self, image: torch.Tensor):
-        # Sequentially run through the layers.
-        conv1 = self.conv1(image)
-        bn1 = self.bn1(conv1)
-        relu = self.relu(bn1)
-        conv2 = self.conv2(relu)
-        bn2 = self.bn2(conv2)
+        residual = image
+        conv = self.relu(self.in1(self.conv1(image)))
+        in2 = self.in2(self.conv2(conv))
+        out = in2 + residual
 
-        # Return the input plus the final layer's output.
-        return image + bn2
+        return out
