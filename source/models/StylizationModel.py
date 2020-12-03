@@ -12,43 +12,53 @@ class StylizationModel(nn.Module):
     https://cs.stanford.edu/people/jcjohns/papers/fast-style/fast-style-supp.pdf
     """
 
-    down1: ConvolutionBlock
-    down2: ConvolutionBlock
-    down3: ConvolutionBlock
+    dim: int
+    conv1: ConvolutionBlock
+    in1: nn.InstanceNorm2d
+    conv2: ConvolutionBlock
+    in2: nn.InstanceNorm2d
+    conv3: ConvolutionBlock
+    in3: nn.InstanceNorm2d
     residual_blocks: List[ResidualBlock]
-    up1: TransposeConvolutionBlock
-    up2: TransposeConvolutionBlock
-    up3: TransposeConvolutionBlock
-    tanh: nn.Tanh
+    deconv1: TransposeConvolutionBlock
+    in4: nn.InstanceNorm2d
+    deconv2: TransposeConvolutionBlock
+    in5: nn.InstanceNorm2d
+    deconv3: TransposeConvolutionBlock
+    relu: nn.ReLU
 
-    def __init__(self) -> None:
+    def __init__(self, block_dim=128)-> None:
         super(StylizationModel, self).__init__()
-        self.down1 = ConvolutionBlock(3, 32, 9, 1)
-        self.down2 = ConvolutionBlock(32, 64, 3, 2)
-        self.down3 = ConvolutionBlock(64, 128, 3, 2)
-        self.residual_blocks = [ResidualBlock(128) for _ in range(5)]
-        self.up1 = TransposeConvolutionBlock(128, 64, 3, 2)
-        self.up2 = TransposeConvolutionBlock(64, 32, 3, 2)
-        self.up3 = TransposeConvolutionBlock(32, 3, 3, 1, include_relu=False)
-        self.tanh = nn.Tanh()
+        # Initial convolution layers
+        self.dim = block_dim
+        self.conv1 = ConvolutionBlock(3, 32, kernel_size=9, stride=1)
+        self.in1 = torch.nn.InstanceNorm2d(32, affine=True)
+        self.conv2 = ConvolutionBlock(32, 64, kernel_size=3, stride=2)
+        self.in2 = torch.nn.InstanceNorm2d(64, affine=True)
+        self.conv3 = ConvolutionBlock(64, self.dim, kernel_size=3, stride=2)
+        self.in3 = torch.nn.InstanceNorm2d(128, affine=True)
+        # Residual layers
+        self.residual_blocks = [ResidualBlock(self.dim) for _ in range(5)]
+        # Upsampling Layers
+        self.deconv1 = TransposeConvolutionBlock(self.dim, 64, kernel_size=3, stride=1, upsample=2)
+        self.in4 = torch.nn.InstanceNorm2d(64, affine=True)
+        self.deconv2 = TransposeConvolutionBlock(64, 32, kernel_size=3, stride=1, upsample=2)
+        self.in5 = torch.nn.InstanceNorm2d(32, affine=True)
+        self.deconv3 = ConvolutionBlock(32, 3, kernel_size=9, stride=1)
+        # Non-linearities
+        self.relu = torch.nn.ReLU()
 
     def forward(self, image: torch.Tensor):
-        assert is_input_image(image)
-
-        # Run through the down convolution layers.
-        down1 = self.down1(image)
-        down2 = self.down2(down1)
-        down3 = self.down3(down2)
-
-        # Run through the residual layers.
-        residual = down3
+        conv1 = self.relu(self.in1(self.conv1(image)))
+        conv2 = self.relu(self.in2(self.conv2(conv1)))
+        conv3 = self.relu(self.in3(self.conv3(conv2)))
+        
+        residual = conv3
         for i in range(5):
             residual = self.residual_blocks[i](residual)
 
-        # Run through the up convolution layers.
-        up1 = self.up1(residual)
-        up2 = self.up2(up1)
-        up3 = self.up3(up2)
+        deconv1 = self.relu(self.in4(self.deconv1(residual)))
+        deconv2 = self.relu(self.in5(self.deconv2(deconv1)))
+        deconv3 = self.deconv3(deconv2)
 
-        # Scale the results to [0, 255].
-        return self.tanh(up3) * 255
+        return deconv3
