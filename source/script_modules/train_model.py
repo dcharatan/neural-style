@@ -17,7 +17,7 @@ from .. import util
 IMAGE_SIZE = 256
 BATCH_SIZE = 4
 LEARNING_RATE = 1e-3
-EPOCHS = 100
+EPOCHS = 1
 FEATURE_WEIGHT = 17
 STYLE_WEIGHT = 50
 MODEL_PATH = "saved_models/model.pth"
@@ -64,17 +64,22 @@ style = Variable(style.repeat(BATCH_SIZE, 1, 1, 1))
 vgg_style = feature_loss_model(style)
 
 # Compute Gram matrices for the style target image
-gram_style = [util.gram_matrix(f) for f in vgg_style]
+gram_style = [util.gram_matrix(f).to(device) for f in vgg_style]
 
 optimizer = Adam(model.parameters(), LEARNING_RATE)
 
 # This is equivalent to the squared normalized euclidean distance.
 euclidean_distance = torch.nn.MSELoss()
 
+# Send everything to the device.
+model = model.to(device)
+feature_loss_model = feature_loss_model.to(device)
+
 model.train()
 for e in range(EPOCHS):
     epoch_start_time = time.time()
     for batch_index, (x, _) in enumerate(train_loader):
+        x = x.to(device)
         batch_start_time = time.time()
         optimizer.zero_grad()
 
