@@ -7,6 +7,7 @@ from typing import List, Tuple
 # import torchvision.models
 # from torchvision.models.vgg import model_urls
 
+
 class FeatureLossModel(nn.Module):
     """This model is based on VGG16. However, instead of returning VGG16's
     output, it returns the"""

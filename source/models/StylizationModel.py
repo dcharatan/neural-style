@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
-from layers.ConvolutionBlock import ConvolutionBlock
-from layers.TransposeConvolutionBlock import TransposeConvolutionBlock
-from layers.ResidualBlock import ResidualBlock
-from validation.validators import is_input_image
+from ..layers.ConvolutionBlock import ConvolutionBlock
+from ..layers.TransposeConvolutionBlock import TransposeConvolutionBlock
+from ..layers.ResidualBlock import ResidualBlock
+from ..validation.validators import is_input_image
 from typing import List
 
 
@@ -27,7 +27,7 @@ class StylizationModel(nn.Module):
     deconv3: TransposeConvolutionBlock
     relu: nn.ReLU
 
-    def __init__(self, block_dim=128)-> None:
+    def __init__(self, block_dim=128) -> None:
         super(StylizationModel, self).__init__()
         # Initial convolution layers
         self.dim = block_dim
@@ -38,11 +38,17 @@ class StylizationModel(nn.Module):
         self.conv3 = ConvolutionBlock(64, self.dim, kernel_size=3, stride=2)
         self.in3 = torch.nn.BatchNorm2d(128, affine=True)
         # Residual layers
-        self.residual_blocks = nn.ModuleList([ResidualBlock(self.dim) for _ in range(5)])
+        self.residual_blocks = nn.ModuleList(
+            [ResidualBlock(self.dim) for _ in range(5)]
+        )
         # Upsampling Layers
-        self.deconv1 = TransposeConvolutionBlock(self.dim, 64, kernel_size=3, stride=1, upsample=2)
+        self.deconv1 = TransposeConvolutionBlock(
+            self.dim, 64, kernel_size=3, stride=1, upsample=2
+        )
         self.in4 = torch.nn.BatchNorm2d(64, affine=True)
-        self.deconv2 = TransposeConvolutionBlock(64, 32, kernel_size=3, stride=1, upsample=2)
+        self.deconv2 = TransposeConvolutionBlock(
+            64, 32, kernel_size=3, stride=1, upsample=2
+        )
         self.in5 = torch.nn.BatchNorm2d(32, affine=True)
         self.deconv3 = ConvolutionBlock(32, 3, kernel_size=9, stride=1)
         # Non-linearities
@@ -53,7 +59,7 @@ class StylizationModel(nn.Module):
         conv1 = self.relu(self.in1(self.conv1(image)))
         conv2 = self.relu(self.in2(self.conv2(conv1)))
         conv3 = self.relu(self.in3(self.conv3(conv2)))
-        
+
         residual = conv3
         for i in range(5):
             residual = self.residual_blocks[i](residual)
@@ -64,6 +70,6 @@ class StylizationModel(nn.Module):
 
         scaled = self.tanh(deconv3)
         # turned out (0,1) works better than (0,255)
-        scaled = (scaled+1)/2
+        scaled = (scaled + 1) / 2
         # scaled = 255*(scaled-torch.min(scaled))/(torch.max(scaled)-torch.min(scaled))
         return scaled

@@ -1,7 +1,5 @@
 import torch
 import torch.nn as nn
-import numpy as np
-from typing import Optional
 
 
 class TransposeConvolutionBlock(nn.Module):
@@ -14,11 +12,14 @@ class TransposeConvolutionBlock(nn.Module):
     reflection_pad: nn.ReflectionPad2d
     conv2d: nn.ConvTranspose2d
 
-    def __init__(self, in_channels: int,
+    def __init__(
+        self,
+        in_channels: int,
         out_channels: int,
         kernel_size: int,
-        stride: int, 
-        upsample=None)-> None:
+        stride: int,
+        upsample=None,
+    ) -> None:
 
         super(TransposeConvolutionBlock, self).__init__()
         self.upsample = upsample
@@ -32,7 +33,7 @@ class TransposeConvolutionBlock(nn.Module):
     def forward(self, image: torch.Tensor):
         if self.upsample:
             image = self.upsample_layer(image)
-        
+
         pad = self.reflection_pad(image)
         conv = self.conv2d(pad)
 

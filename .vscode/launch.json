@@ -8,7 +8,13 @@
             "name": "Train Stylization Model",
             "type": "python",
             "request": "launch",
-            "module": "source.train",
+            "module": "source.script_modules.train_model",
+        },
+        {
+            "name": "Run Pre-trained Model",
+            "type": "python",
+            "request": "launch",
+            "module": "source.script_modules.run_pretrained_model",
         },
     ]
 }

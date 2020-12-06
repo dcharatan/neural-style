@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-from layers.ConvolutionBlock import ConvolutionBlock
+from ..layers.ConvolutionBlock import ConvolutionBlock
+
 
 class ResidualBlock(torch.nn.Module):
     """This is a residual block as defined in "Perceptual Losses for Real-Time
@@ -14,12 +15,15 @@ class ResidualBlock(torch.nn.Module):
     conv2: ConvolutionBlock
     in2: nn.BatchNorm2d
 
-
     def __init__(self, num_channels: int) -> None:
         super(ResidualBlock, self).__init__()
-        self.conv1 = ConvolutionBlock(num_channels, num_channels, kernel_size=3, stride=1)
+        self.conv1 = ConvolutionBlock(
+            num_channels, num_channels, kernel_size=3, stride=1
+        )
         self.in1 = torch.nn.BatchNorm2d(num_channels, affine=True)
-        self.conv2 = ConvolutionBlock(num_channels, num_channels, kernel_size=3, stride=1)
+        self.conv2 = ConvolutionBlock(
+            num_channels, num_channels, kernel_size=3, stride=1
+        )
         self.in2 = torch.nn.BatchNorm2d(num_channels, affine=True)
         self.relu = torch.nn.ReLU()
 

@@ -1,6 +1,5 @@
 import torch
 import numpy as np
-from PIL import Image
 import matplotlib.pyplot as plt
 
 # Computes the Gram matrix given phi_j(x)
@@ -9,10 +8,11 @@ import matplotlib.pyplot as plt
 # https://arxiv.org/pdf/1603.08155.pdf
 def gram_matrix(x):
     (j, c, h, w) = x.size()
-    psi = x.view(j, c, h*w)
+    psi = x.view(j, c, h * w)
     psi_T = torch.transpose(psi, 1, 2)
     G = psi.bmm(psi_T) / (c * h * w)
     return G
+
 
 def show_img(data):
     # Revert the normalization based on pretrained torchvision models
@@ -20,6 +20,6 @@ def show_img(data):
     mean = np.array([0.485, 0.456, 0.406]).reshape((3, 1, 1))
     img = data.clone().numpy()
     img = (img * std + mean).transpose(1, 2, 0)
-    img = ( img - np.min(img) ) / (np.max(img) - np.min(img))
+    img = (img - np.min(img)) / (np.max(img) - np.min(img))
     plt.imshow(img)
     plt.show()
