@@ -7,9 +7,9 @@ import torchvision.transforms as transforms
 import numpy as np
 from PIL import Image
 
-from .models.StylizationModel import StylizationModel
-from .models.FeatureLossModel import FeatureLossModel
-from . import util
+from models.StylizationModel import StylizationModel
+from models.FeatureLossModel import FeatureLossModel
+import util
 
 
 # TODO: Constants -- tune later
@@ -17,8 +17,9 @@ IMAGE_SIZE = 256
 BATCH_SIZE = 4
 LEARNING_RATE = 1e-3
 EPOCHS = 10
-FEATURE_WEIGHT = 1
-STYLE_WEIGHT = 1
+FEATURE_WEIGHT = 17
+STYLE_WEIGHT = 50
+PATH = "saved_models/model"
 
 # Use CUDA if it's available.
 device = torch.device("cpu")
@@ -28,15 +29,15 @@ if torch.cuda.is_available():
 # Try the model with random inputs to make sure the sizes work out.
 # input = torch.from_numpy(np.random.random((1, 3, 256, 256))).float()
 model = StylizationModel()
-# output = model(input)
+# model.load_state_dict(torch.load(PATH))
 
 # Try the feature loss model to make sure the hooks work.
 feature_loss_model = FeatureLossModel([(1, 2), (2, 2), (3, 3), (4, 3)])
-# vgg_output = feature_loss_model(input)
 
 # Load dummy training data set
 train_transform = transforms.Compose([
-    transforms.Scale(IMAGE_SIZE),
+    # transforms.Scale(IMAGE_SIZE),
+    transforms.Resize(IMAGE_SIZE),
     transforms.CenterCrop(IMAGE_SIZE),
     transforms.ToTensor(),
     # normalized based on pretrained torchvision models
@@ -45,7 +46,7 @@ train_transform = transforms.Compose([
                          std=[0.229, 0.224, 0.225])])
 # this training set below is filler -- the actual paper uses the COCO dataset 
 # TODO: replace trainset with appropriate training set 
-trainset = torchvision.datasets.ImageFolder('content', train_transform) 
+trainset = torchvision.datasets.ImageFolder('../content', train_transform) 
 train_loader = DataLoader(trainset, batch_size = BATCH_SIZE)
 
 # Style target image (using starry night for now)
@@ -53,7 +54,7 @@ style_transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406],
                          std=[0.229, 0.224, 0.225])])
-style = Image.open("./style/starrynight.jpg")
+style = Image.open("../style/starrynight.jpg")
 style = style_transform(style)
 style = Variable(style.repeat(BATCH_SIZE, 1, 1, 1))
 vgg_style = feature_loss_model(style)
@@ -98,8 +99,14 @@ for e in range(EPOCHS):
     print("Epoch: %s" % str(e+1))
 
 model.eval()
-test = Image.open("./test/test.jpg")
+test = Image.open("../test/test.jpg")
 test = train_transform(test)
 test = Variable(test.repeat(BATCH_SIZE, 1, 1, 1))
 output_test = model(test)
 util.show_img(output_test.data[0])
+
+torch.save(model.state_dict(), PATH)
+
+
+
+
