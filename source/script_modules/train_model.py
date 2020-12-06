@@ -17,9 +17,10 @@ from .. import util
 IMAGE_SIZE = 256
 BATCH_SIZE = 4
 LEARNING_RATE = 1e-3
-EPOCHS = 1
+EPOCHS = 2
 FEATURE_WEIGHT = 17
 STYLE_WEIGHT = 50
+REG_WEIGHT = 1
 MODEL_PATH = "saved_models/model.pth"
 
 # Use CUDA if it's available.
@@ -105,7 +106,14 @@ for e in range(EPOCHS):
             )
         style_loss *= STYLE_WEIGHT
 
-        total_loss = feature_loss + style_loss
+        # Add total variation regularization as described on page 9 of
+        # https://towardsdatascience.com/pytorch-implementation-of-perceptual-losses-for-real-time-style-transfer-8d608e2e9902
+        reg_loss = REG_WEIGHT * (
+            torch.sum(torch.abs(y_hat[:, :, :, :-1] - y_hat[:, :, :, 1:])) + 
+            torch.sum(torch.abs(y_hat[:, :, :-1, :] - y_hat[:, :, 1:, :]))
+        )
+
+        total_loss = feature_loss + style_loss + reg_loss
         total_loss.backward()
         optimizer.step()
 
