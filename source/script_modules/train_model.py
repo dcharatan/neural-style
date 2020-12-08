@@ -17,9 +17,9 @@ from .. import util
 IMAGE_SIZE = 256
 BATCH_SIZE = 4
 LEARNING_RATE = 1e-3
-EPOCHS = 2
-FEATURE_WEIGHT = 17
-STYLE_WEIGHT = 50
+EPOCHS = 10
+FEATURE_WEIGHT = 1e5
+STYLE_WEIGHT = 1e10
 REG_WEIGHT = 1
 MODEL_PATH = "saved_models/model.pth"
 
@@ -29,21 +29,18 @@ if torch.cuda.is_available():
     device = torch.device("cuda")
 
 
-model = StylizationModel()
+model = StylizationModel().to(device)
 
 # Load the pre-trained feature loss model.
-feature_loss_model = FeatureLossModel([(1, 2), (2, 2), (3, 3), (4, 3)])
+feature_loss_model = FeatureLossModel().to(device)
 
 # Load dummy training data set
 train_transform = transforms.Compose(
     [
-        # transforms.Scale(IMAGE_SIZE),
         transforms.Resize(IMAGE_SIZE),
         transforms.CenterCrop(IMAGE_SIZE),
         transforms.ToTensor(),
-        # normalized based on pretrained torchvision models
-        # https://discuss.pytorch.org/t/how-to-preprocess-input-for-pre-trained-networks/683
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        transforms.Lambda(lambda x: x.mul(255))
     ]
 )
 # this training set below is filler -- the actual paper uses the COCO dataset
@@ -56,25 +53,21 @@ train_loader_len = len(train_loader)
 style_transform = transforms.Compose(
     [
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        transforms.Lambda(lambda x: x.mul(255))
     ]
 )
-style = Image.open("style/starrynight.jpg")
-style = style_transform(style)
-style = Variable(style.repeat(BATCH_SIZE, 1, 1, 1))
-vgg_style = feature_loss_model(style)
+style = Image.open("style/starrynight.jpg").convert('RGB')
+style = style_transform(style).to(device)
+style = Variable(style.repeat(BATCH_SIZE, 1, 1, 1)).to(device)
+vgg_style = feature_loss_model(util.normalize_batch(style))
 
 # Compute Gram matrices for the style target image
-gram_style = [util.gram_matrix(f).to(device) for f in vgg_style]
+gram_style = [util.gram_matrix(f) for f in vgg_style]
 
 optimizer = Adam(model.parameters(), LEARNING_RATE)
 
 # This is equivalent to the squared normalized euclidean distance.
 euclidean_distance = torch.nn.MSELoss()
-
-# Send everything to the device.
-model = model.to(device)
-feature_loss_model = feature_loss_model.to(device)
 
 model.train()
 for e in range(EPOCHS):
@@ -86,6 +79,14 @@ for e in range(EPOCHS):
 
         # Get the stylized output.
         y_hat = model(x)
+
+        #All pre-trained models(vgg16) expect input images normalized in the same way, i.e. mini-batches of
+        # 3-channel RGB images of shape (3 x H x W), where H and W are expected to be atleast 224.
+
+        # The images have to be loaded in to a range of [0, 1] and then 
+        # normalized using mean=[0.485, 0.456, 0.406] and std=[0.229, 0.224, 0.225]
+        x = util.normalize_batch(x)
+        y_hat = util.normalize_batch(y_hat)
 
         # Get the feature representations for the input and output.
         vgg_y_hat = feature_loss_model(y_hat)

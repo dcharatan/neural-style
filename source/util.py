@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+import torchvision.transforms as transforms
 
 # Computes the Gram matrix given phi_j(x)
 #  "The Gram matrix can be computed efficiently by reshaping phi_j(x) into a matrix psi of
@@ -23,3 +24,9 @@ def show_img(data):
     img = (img - np.min(img)) / (np.max(img) - np.min(img))
     plt.imshow(img)
     plt.show()
+
+def normalize_batch(x):
+    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], 
+                         std=[0.229, 0.224, 0.225])
+    div = x.div(255.0)
+    return normalize(div)

@@ -17,18 +17,13 @@ model.eval()
 
 train_transform = transforms.Compose(
     [
-        # transforms.Scale(IMAGE_SIZE),
-        transforms.Resize(IMAGE_SIZE),
-        transforms.CenterCrop(IMAGE_SIZE),
         transforms.ToTensor(),
-        # normalized based on pretrained torchvision models
-        # https://discuss.pytorch.org/t/how-to-preprocess-input-for-pre-trained-networks/683
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        transforms.Lambda(lambda x: x.mul(255))
     ]
 )
 
 # Run the image through the model.
-test = Image.open(INPUT_PATH)
+test = Image.open(INPUT_PATH).convert('RGB')
 test = train_transform(test)
 test = torch.Tensor(test.repeat(BATCH_SIZE, 1, 1, 1))
 output_test = model(test).detach().numpy()

@@ -10,21 +10,21 @@ class ResidualBlock(torch.nn.Module):
     """
 
     conv1: ConvolutionBlock
-    in1: nn.BatchNorm2d
+    in1: nn.InstanceNorm2d
     relu: nn.ReLU
     conv2: ConvolutionBlock
-    in2: nn.BatchNorm2d
+    in2: nn.InstanceNorm2d
 
     def __init__(self, num_channels: int) -> None:
         super(ResidualBlock, self).__init__()
         self.conv1 = ConvolutionBlock(
             num_channels, num_channels, kernel_size=3, stride=1
         )
-        self.in1 = torch.nn.BatchNorm2d(num_channels, affine=True)
+        self.in1 = torch.nn.InstanceNorm2d(num_channels, affine=True)
         self.conv2 = ConvolutionBlock(
             num_channels, num_channels, kernel_size=3, stride=1
         )
-        self.in2 = torch.nn.BatchNorm2d(num_channels, affine=True)
+        self.in2 = torch.nn.InstanceNorm2d(num_channels, affine=True)
         self.relu = torch.nn.ReLU()
 
     def forward(self, image: torch.Tensor):

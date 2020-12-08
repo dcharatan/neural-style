@@ -13,12 +13,9 @@ class FeatureLossModel(nn.Module):
     output, it returns the"""
 
     vgg16: models.vgg.VGG
-    desired_features: List[Tuple[int, int]]
-    major: int
-    minor: int
     features: List[torch.Tensor]
 
-    def __init__(self, desired_features: List[Tuple[int, int]]) -> None:
+    def __init__(self) -> None:
         """desired_features should be a list of tuples of (major, minor), where
         major and minor are the one-indexed indices of the ReLU layers whose
         outputs should be outputted when the model is called. The major number
@@ -39,35 +36,18 @@ class FeatureLossModel(nn.Module):
         for param in self.vgg16.parameters():
             param.requires_grad = False
 
-        # Apply hooks to extract features.
-        # desired_features is
-        self.desired_features = desired_features
-        self.minor = 1
-        self.major = 1
-        self.vgg16.apply(self.register_hook)
         self.features = []
-
+        self.register_hook()
+        
     def hook(self, module, input, output):
         self.features.append(output)
 
-    def register_hook(self, module):
-        # Increment the minor number each time a Conv2d is encountered.
-        if isinstance(module, nn.Conv2d):
-            self.minor += 1
-
-        # Reset the minor number and increment the major number each time a
-        # MaxPool2d is encountered.
-        if isinstance(module, nn.MaxPool2d):
-            self.minor = 1
-            self.major += 1
-
-        # Register hooks for ReLU layers if they're in desired_features.
-        if (
-            isinstance(module, nn.ReLU)
-            and (self.major, self.minor) in self.desired_features
-        ):
-            module.register_forward_hook(self.hook)
-
+    def register_hook(self):
+        self.vgg16.features[3].register_forward_hook(self.hook)
+        self.vgg16.features[8].register_forward_hook(self.hook)
+        self.vgg16.features[15].register_forward_hook(self.hook)
+        self.vgg16.features[22].register_forward_hook(self.hook)
+        
     def forward(self, image: torch.Tensor) -> List[torch.Tensor]:
         """Run VGG16, but instead of returning the classification output, return
         the intermediate feature layer outputs.
