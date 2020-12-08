@@ -1,131 +1,100 @@
+from source.image import get_data_loader_transform, load_image, save_image
 import torch
 from torch.optim import Adam
 from torch.utils.data import DataLoader
-from torch.autograd import Variable
 import torchvision
-import torchvision.transforms as transforms
 import numpy as np
 import time
-from PIL import Image
-
 from ..models.StylizationModel import StylizationModel
 from ..models.FeatureLossModel import FeatureLossModel
 from .. import util
+import os
 
 
 # TODO: Constants -- tune later
 IMAGE_SIZE = 256
 BATCH_SIZE = 4
 LEARNING_RATE = 1e-3
-EPOCHS = 10
-FEATURE_WEIGHT = 1e5
-STYLE_WEIGHT = 1e10
-REG_WEIGHT = 1
-MODEL_PATH = "saved_models/model.pth"
+EPOCHS = 1
+FEATURE_WEIGHT = 1
+STYLE_WEIGHT = 20000
+MODEL_FOLDER = "saved_models"
+STYLE_IMAGE = "style/starrynight.jpg"
 
 # Use CUDA if it's available.
 device = torch.device("cpu")
 if torch.cuda.is_available():
     device = torch.device("cuda")
+style_model = StylizationModel().to(device)
+feature_model = FeatureLossModel([(1, 2), (2, 2), (3, 3), (4, 3)]).to(device)
 
-
-model = StylizationModel().to(device)
-
-# Load the pre-trained feature loss model.
-feature_loss_model = FeatureLossModel().to(device)
-
-# Load dummy training data set
-train_transform = transforms.Compose(
-    [
-        transforms.Resize(IMAGE_SIZE),
-        transforms.CenterCrop(IMAGE_SIZE),
-        transforms.ToTensor(),
-        transforms.Lambda(lambda x: x.mul(255))
-    ]
+# Set up the data loader.
+trainset = torchvision.datasets.ImageFolder(
+    "content", get_data_loader_transform(IMAGE_SIZE)
 )
-# this training set below is filler -- the actual paper uses the COCO dataset
-# TODO: replace trainset with appropriate training set
-trainset = torchvision.datasets.ImageFolder("content", train_transform)
 train_loader = DataLoader(trainset, batch_size=BATCH_SIZE)
 train_loader_len = len(train_loader)
 
-# Style target image (using starry night for now)
-style_transform = transforms.Compose(
-    [
-        transforms.ToTensor(),
-        transforms.Lambda(lambda x: x.mul(255))
-    ]
-)
-style = Image.open("style/starrynight.jpg").convert('RGB')
-style = style_transform(style).to(device)
-style = Variable(style.repeat(BATCH_SIZE, 1, 1, 1)).to(device)
-vgg_style = feature_loss_model(util.normalize_batch(style))
-
-# Compute Gram matrices for the style target image
-gram_style = [util.gram_matrix(f) for f in vgg_style]
-
-optimizer = Adam(model.parameters(), LEARNING_RATE)
+# Load the style image.
+style = load_image(STYLE_IMAGE).repeat(BATCH_SIZE, 1, 1, 1).to(device)
+vgg_style = feature_model(style)
+gram_style = {name: util.gram_matrix(tensor) for name, tensor in vgg_style.items()}
 
 # This is equivalent to the squared normalized euclidean distance.
-euclidean_distance = torch.nn.MSELoss()
-
-model.train()
+norm = torch.nn.MSELoss()
+optimizer = Adam(style_model.parameters(), LEARNING_RATE)
+style_model.train()
 for e in range(EPOCHS):
     epoch_start_time = time.time()
     for batch_index, (x, _) in enumerate(train_loader):
-        x = x.to(device)
+        # The image x is normalized to [0, 1].
         batch_start_time = time.time()
+        x = x.to(device)
         optimizer.zero_grad()
 
         # Get the stylized output.
-        y_hat = model(x)
-
-        #All pre-trained models(vgg16) expect input images normalized in the same way, i.e. mini-batches of
-        # 3-channel RGB images of shape (3 x H x W), where H and W are expected to be atleast 224.
-
-        # The images have to be loaded in to a range of [0, 1] and then 
-        # normalized using mean=[0.485, 0.456, 0.406] and std=[0.229, 0.224, 0.225]
-        x = util.normalize_batch(x)
-        y_hat = util.normalize_batch(y_hat)
+        y_hat = style_model(x)
+        mu = torch.mean(y_hat)
+        std = torch.std(y_hat)
+        mini = torch.min(y_hat)
+        maxi = torch.max(y_hat)
 
         # Get the feature representations for the input and output.
-        vgg_y_hat = feature_loss_model(y_hat)
-        vgg_x = feature_loss_model(x)
+        vgg_y_hat = feature_model(y_hat)
+        vgg_x = feature_model(x)
 
         # Compute the feature reconstruction loss.
-        feature_loss = FEATURE_WEIGHT * euclidean_distance(vgg_y_hat[1], vgg_x[1])
+        feature_loss = FEATURE_WEIGHT * norm(vgg_y_hat["relu2_2"], vgg_x["relu2_2"])
 
         # Compute the style reconstruction loss.
         style_loss = 0.0
-        gram_y_hat = [util.gram_matrix(f) for f in vgg_y_hat]
-        len_x = len(x)
-        for index in range(len(gram_y_hat)):
-            # Compute the squared Frobenius norm, which is equivalent to the
-            # squared Euclidean norm, so we can reuse the previous criterion.
-            style_loss += euclidean_distance(
-                gram_y_hat[index], gram_style[index][:len_x]
-            )
+        gram_y_hat = {
+            name: util.gram_matrix(tensor) for name, tensor in vgg_y_hat.items()
+        }
+        for name in vgg_y_hat.keys():
+            style_loss += norm(gram_y_hat[name], gram_style[name])
         style_loss *= STYLE_WEIGHT
 
-        # Add total variation regularization as described on page 9 of
-        # https://towardsdatascience.com/pytorch-implementation-of-perceptual-losses-for-real-time-style-transfer-8d608e2e9902
-        reg_loss = REG_WEIGHT * (
-            torch.sum(torch.abs(y_hat[:, :, :, :-1] - y_hat[:, :, :, 1:])) + 
-            torch.sum(torch.abs(y_hat[:, :, :-1, :] - y_hat[:, :, 1:, :]))
-        )
-
-        total_loss = feature_loss + style_loss + reg_loss
+        total_loss = feature_loss + style_loss
         total_loss.backward()
         optimizer.step()
 
-        print(
-            f"Batch {batch_index} of {train_loader_len} took {time.time() - batch_start_time} seconds."
-        )
-        print(f"Feature loss: {feature_loss.data.item()}")
-        print(f"Style loss: {style_loss.data.item()}")
+        if batch_index % 50 == 0:
+            print(
+                f"Batch {batch_index} of {train_loader_len} took {time.time() - batch_start_time} seconds."
+            )
+            print(f"Feature loss: {feature_loss.data.item()}")
+            print(f"Style loss: {style_loss.data.item()}")
+        if batch_index % 200 == 0:
+            save_image(f"tmp_{e}_{batch_index}.png", y_hat[0].cpu().detach().numpy())
+        if batch_index % 1000 == 0:
+            torch.save(
+                style_model.state_dict(),
+                os.path.join(MODEL_FOLDER, f"tmp_model_{e}_{batch_index}.pth"),
+            )
 
     print(f"Epoch: {e + 1} took {time.time() - epoch_start_time} seconds.")
 
-# Save the trained model.
-model.eval()
-torch.save(model.state_dict(), MODEL_PATH)
+# Save the trained style_model.
+style_model.eval()
+torch.save(style_model.state_dict(), os.path.join(MODEL_FOLDER, "final_model.pth"))

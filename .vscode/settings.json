@@ -30,4 +30,10 @@
     "python.testing.unittestEnabled": true,
     "editor.rulers": [80],
     "editor.formatOnSave": true,
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/*/**": true,
+        "**/train2017": true,
+    },
 }

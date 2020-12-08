@@ -5,8 +5,8 @@ import torchvision.transforms as transforms
 import numpy as np
 
 MODEL_PATH = "saved_models/model.pth"
-INPUT_PATH = "test/test.jpg"
-OUTPUT_PATH = "result/test.jpg"
+INPUT_PATH = "test/scene.jpg"
+OUTPUT_PATH = "result/test1.jpg"
 IMAGE_SIZE = 256
 BATCH_SIZE = 4
 
@@ -16,14 +16,11 @@ model.load_state_dict(torch.load(MODEL_PATH))
 model.eval()
 
 train_transform = transforms.Compose(
-    [
-        transforms.ToTensor(),
-        transforms.Lambda(lambda x: x.mul(255))
-    ]
+    [transforms.ToTensor(), transforms.Lambda(lambda x: x.mul(255))]
 )
 
 # Run the image through the model.
-test = Image.open(INPUT_PATH).convert('RGB')
+test = Image.open(INPUT_PATH).convert("RGB")
 test = train_transform(test)
 test = torch.Tensor(test.repeat(BATCH_SIZE, 1, 1, 1))
 output_test = model(test).detach().numpy()
