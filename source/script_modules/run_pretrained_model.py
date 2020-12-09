@@ -34,11 +34,11 @@ if __name__ == "__main__":
     model.eval()
 
     if args["video"]:
+        video_clip = VideoFileClip(VIDEO_IN, audio=False)
         current_directory = os.getcwd()
         tmp_directory = os.path.join(current_directory,TMP_DIR)
         os.makedirs(tmp_directory) 
 
-        video_clip = VideoFileClip(VIDEO_IN, audio=False)
         for i, frame in enumerate(video_clip.iter_frames()):
             frame = get_numpy_transform(frame)
             pred = model(frame).detach().numpy()[0]
