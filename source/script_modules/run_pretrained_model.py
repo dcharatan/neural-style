@@ -1,4 +1,4 @@
-from source.image import load_image, save_image
+from source.image import load_image, save_image, get_numpy_transform
 import torch
 from ..models.StylizationModel import StylizationModel
 from PIL import Image
@@ -6,6 +6,9 @@ import torchvision.transforms as tf
 import numpy as np
 import cv2
 import argparse
+from moviepy.editor import VideoFileClip, ImageSequenceClip
+import os
+import shutil
 
 if __name__ == "__main__":
     # Parse arguments
@@ -19,16 +22,32 @@ if __name__ == "__main__":
     MODEL_PATH = "saved_models/final_model.pth"
     INPUT_PATH = "test/stadt.jpg"
     OUTPUT_PATH = "result/test1.jpg"
+    VIDEO_IN = "test/"
+    VIDEO_OUT = "result/"
+    TMP_DIR = "tmp"
     IMAGE_SIZE = 256
     BATCH_SIZE = 4
 
     # Load the pre-trained model.
     model = StylizationModel()
-    model.load_state_dict(torch.load(MODEL_PATH))
+    # model.load_state_dict(torch.load(MODEL_PATH))
     model.eval()
 
     if args["video"]:
-        pass
+        current_directory = os.getcwd()
+        tmp_directory = os.path.join(current_directory,TMP_DIR)
+        os.makedirs(tmp_directory) 
+
+        video_clip = VideoFileClip(VIDEO_IN, audio=False)
+        for i, frame in enumerate(video_clip.iter_frames()):
+            frame = get_numpy_transform(frame)
+            pred = model(frame).detach().numpy()[0]
+            save_image(tmp_directory + '/' + str(i).zfill(5) + '.png')
+
+        ImageSequenceClip(sequence=tmp_directory + '/', fps=video_clip.fps).write_videofile(VIDEO_OUT)
+        shutil.rmtree(tmp_directory + '/')
+        
+
 
     if args["webcam"]: # webcam mode, process frames in webcam stream
         cap = cv2.VideoCapture(0)

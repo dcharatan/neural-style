@@ -52,6 +52,9 @@ def load_image(file_name: str, image=None) -> torch.Tensor:
         image = Image.open(file_name)
     return transform(image).unsqueeze(0)
 
+def get_numpy_transform(image) -> torch.Tensor:
+    transform = get_pillow_transform(None)
+    return transform(image)
 
 def save_image(file_name: str, image: np.ndarray):
     # Go from (C, H, W) to (H, W, C).
