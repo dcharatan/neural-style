@@ -3,7 +3,7 @@ import torch.nn as nn
 from ..layers.ConvolutionBlock import ConvolutionBlock
 
 
-class ResidualBlock(torch.nn.Module):
+class ResidualBlock(nn.Module):
     """This is a residual block as defined in "Perceptual Losses for Real-Time
     Style Transfer and Super-Resolution: Supplementary Material" by Johnson et
     al. See https://cs.stanford.edu/people/jcjohns/papers/fast-style/fast-style-supp.pdf

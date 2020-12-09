@@ -6,7 +6,7 @@ from .ConvolutionBlock import ConvolutionBlock
 class UpsampleBlock(nn.Module):
     """This increases resolution by upsampling and then convolving."""
 
-    reflection_pad: nn.ReflectionPad2d
+    upsample: nn.Upsample
     conv: ConvolutionBlock
 
     def __init__(
@@ -18,9 +18,8 @@ class UpsampleBlock(nn.Module):
     ) -> None:
 
         super(UpsampleBlock, self).__init__()
-        self.upsample_layer = nn.Upsample(scale_factor=scale_factor)
+        self.upsample = nn.Upsample(scale_factor=scale_factor)
         self.conv = ConvolutionBlock(in_channels, out_channels, kernel_size, 1)
 
     def forward(self, image: torch.Tensor):
-        upsampled = self.upsample_layer(image)
-        return self.conv(upsampled)
+        return self.conv(self.upsample(image))
