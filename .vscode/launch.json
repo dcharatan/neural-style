@@ -15,6 +15,13 @@
             "type": "python",
             "request": "launch",
             "module": "source.script_modules.run_pretrained_model",
+            "args": ["--webcam"]
+        },
+        {
+            "name": "Make Image Grid",
+            "type": "python",
+            "request": "launch",
+            "module": "source.script_modules.make_image_grid",
         },
     ]
 }

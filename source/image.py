@@ -4,8 +4,6 @@ import numpy as np
 from PIL import Image
 from typing import Optional
 
-NORMALIZE = tf.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-
 
 def per_channel_normalize(x: torch.Tensor):
     if x.ndim != 3:
@@ -20,7 +18,6 @@ def get_data_loader_transform(image_size: int):
         tf.Resize(image_size),
         tf.CenterCrop(image_size),
         tf.ToTensor(),
-        per_channel_normalize,
     ]
     return tf.Compose(transforms)
 
@@ -34,7 +31,6 @@ def get_pillow_transform(image_size: Optional[int]):
             tf.CenterCrop(image_size),
         ]
     transforms.append(tf.ToTensor())
-    transforms.append(per_channel_normalize)
     return tf.Compose(transforms)
 
 
