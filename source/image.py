@@ -4,28 +4,12 @@ import numpy as np
 from PIL import Image
 from typing import Optional
 
-NORMALIZE = tf.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-
-
-def custom_normalize(x: torch.Tensor):
-    if x.ndim == 4:
-        mu = torch.mean(x, dim=[2, 3])
-        std = torch.std(x, dim=[2, 3])
-        return 0.5 + (x - mu[:, None, None, None]) / (2 * std[:, None, None, None])
-    elif x.ndim == 3:
-        mu = torch.mean(x, dim=[1, 2])
-        std = torch.std(x, dim=[1, 2])
-        return 0.5 + (x - mu[:, None, None]) / (2 * std[:, None, None])
-    else:
-        raise Exception("not implemented")
-
 
 def get_data_loader_transform(image_size: int):
     transforms = [
         tf.Resize(image_size),
         tf.CenterCrop(image_size),
         tf.ToTensor(),
-        custom_normalize,
     ]
     return tf.Compose(transforms)
 
@@ -39,7 +23,6 @@ def get_pillow_transform(image_size: Optional[int]):
             tf.CenterCrop(image_size),
         ]
     transforms.append(tf.ToTensor())
-    transforms.append(custom_normalize)
     return tf.Compose(transforms)
 
 

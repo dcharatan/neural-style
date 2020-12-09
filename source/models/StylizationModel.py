@@ -31,7 +31,12 @@ class StylizationModel(nn.Module):
         )
 
     def forward(self, image: torch.Tensor):
-        x = self.down_convolution(image)
+        # Normalize the image on a per-channel, per-image basis.
+        mu = torch.mean(image, dim=[2, 3])
+        std = torch.std(image, dim=[2, 3])
+        x = 0.5 + (image - mu[:, :, None, None]) / (2 * std[:, :, None, None])
+
+        x = self.down_convolution(x)
         x = self.residual(x)
         x = self.up_convolution(x)
         return torch.tanh(x) * 0.5 + 0.5

@@ -1,11 +1,14 @@
 import torch
 import torch.nn as nn
 import torchvision.models as models
+import torchvision.transforms as tf
 from typing import List, Tuple, Dict
 
 # Uncomment this if VGG16 download does not work
 # import torchvision.models
 # from torchvision.models.vgg import model_urls
+
+VGG16_NORMALIZE = tf.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
 
 class FeatureLossModel(nn.Module):
@@ -76,5 +79,8 @@ class FeatureLossModel(nn.Module):
         the intermediate feature layer outputs.
         """
         self.features = {}
-        self.vgg16(image)
+
+        # The input image is in the range [0, 1]. The pretrained VGG network
+        # expects images to be normalized according to VGG16_NORMALIZE, however.
+        self.vgg16(VGG16_NORMALIZE(image))
         return self.features
