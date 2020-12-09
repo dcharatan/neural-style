@@ -43,12 +43,13 @@ def get_pillow_transform(image_size: Optional[int]):
     return tf.Compose(transforms)
 
 
-def load_image(file_name: str) -> torch.Tensor:
+def load_image(file_name: str, image=None) -> torch.Tensor:
     """Load an image so that its shape is (B, C, H, W) and it's normalized to
     the range [0, 1].
     """
     transform = get_pillow_transform(None)
-    image = Image.open(file_name)
+    if file_name != "":
+        image = Image.open(file_name)
     return transform(image).unsqueeze(0)
 
 
