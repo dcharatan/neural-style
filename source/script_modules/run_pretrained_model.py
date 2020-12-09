@@ -1,11 +1,12 @@
+from source.image import load_image, save_image
 import torch
 from ..models.StylizationModel import StylizationModel
 from PIL import Image
-import torchvision.transforms as transforms
+import torchvision.transforms as tf
 import numpy as np
 
-MODEL_PATH = "saved_models/model.pth"
-INPUT_PATH = "test/scene.jpg"
+MODEL_PATH = "saved_models/starrynight_norm.pth"
+INPUT_PATH = "test/stadt.jpg"
 OUTPUT_PATH = "result/test1.jpg"
 IMAGE_SIZE = 256
 BATCH_SIZE = 4
@@ -15,16 +16,13 @@ model = StylizationModel()
 model.load_state_dict(torch.load(MODEL_PATH))
 model.eval()
 
-train_transform = transforms.Compose(
-    [transforms.ToTensor(), transforms.Lambda(lambda x: x.mul(255))]
-)
-
 # Run the image through the model.
-test = Image.open(INPUT_PATH).convert("RGB")
-test = train_transform(test)
-test = torch.Tensor(test.repeat(BATCH_SIZE, 1, 1, 1))
+test = load_image(INPUT_PATH)
+test = tf.Compose(
+    [
+        tf.Resize(IMAGE_SIZE),
+        tf.CenterCrop(IMAGE_SIZE),
+    ]
+)(test)
 output_test = model(test).detach().numpy()
-image = output_test[0, :, :, :]
-image = np.transpose(image, (1, 2, 0))
-
-Image.fromarray(np.uint8(image * 255)).save(OUTPUT_PATH)
+save_image(OUTPUT_PATH, output_test[0, :, :, :])

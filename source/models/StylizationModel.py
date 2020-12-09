@@ -1,11 +1,8 @@
 from source.layers.UpsampleBlock import UpsampleBlock
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from ..layers.ConvolutionBlock import ConvolutionBlock
 from ..layers.ResidualBlock import ResidualBlock
-from ..validation.validators import is_input_image
-from typing import List
 
 
 class StylizationModel(nn.Module):
@@ -37,4 +34,4 @@ class StylizationModel(nn.Module):
         x = self.down_convolution(image)
         x = self.residual(x)
         x = self.up_convolution(x)
-        return F.tanh(x) * 0.5 + 0.5
+        return torch.tanh(x) * 0.5 + 0.5

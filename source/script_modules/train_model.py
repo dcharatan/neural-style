@@ -17,9 +17,9 @@ BATCH_SIZE = 4
 LEARNING_RATE = 1e-3
 EPOCHS = 1
 FEATURE_WEIGHT = 1
-STYLE_WEIGHT = 20000
+STYLE_WEIGHT = 80000
 MODEL_FOLDER = "saved_models"
-STYLE_IMAGE = "style/starrynight.jpg"
+STYLE_IMAGE = "style/mosaic.jpg"
 
 # Use CUDA if it's available.
 device = torch.device("cpu")
@@ -85,7 +85,7 @@ for e in range(EPOCHS):
             )
             print(f"Feature loss: {feature_loss.data.item()}")
             print(f"Style loss: {style_loss.data.item()}")
-        if batch_index % 200 == 0:
+        if batch_index % 25 == 0:
             save_image(f"tmp_{e}_{batch_index}.png", y_hat[0].cpu().detach().numpy())
         if batch_index % 1000 == 0:
             torch.save(
