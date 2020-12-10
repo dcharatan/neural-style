@@ -56,6 +56,10 @@ for e in range(settings["num_epochs"]):
     for batch_index, (images, _) in tqdm(
         enumerate(train_loader), total=len(train_loader)
     ):
+        # Ignore batches smaller than batch size.
+        if images.shape[0] != batch_size:
+            break
+
         # The image x is normalized to [0, 1].
         batch_start_time = time.time()
         x = images.to(device)
