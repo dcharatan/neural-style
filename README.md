@@ -1,5 +1,9 @@
 # CSCI 1290 Final Project: Neural Style
 
+|       James Tompkin (Mosaic Style)        |   James Tompkin (Great Wave Style)    |
+| :---------------------------------------: | :-----------------------------------: |
+| ![Mosaic James](results/james_mosaic.jpg) | ![Wave James](results/james_wave.jpg) |
+
 For our final project, we implemented style transfer based on [Perceptual Losses for Real-Time Style Transfer
 and Super-Resolution](https://cs.stanford.edu/people/jcjohns/eccv16/) by Justin Johnson, Alexandre Alahi and Fei-Fei Li and the [fast-neural-style-pytorch](https://github.com/rrmina/fast-neural-style-pytorch) repository.
 
@@ -8,8 +12,10 @@ and Super-Resolution](https://cs.stanford.edu/people/jcjohns/eccv16/) by Justin 
 All of the scripts can be found in `source/script_modules`. To run a script, `cd` into the project root directory and run it as a Python module. For example:
 
 ```
-python3 -m source.script_modules.train_model
+python3 -m source.script_modules.train_model --file_name <settings.json>
 ```
+
+Several settings files can be found in the `settings` folder.
 
 ## Project Setup
 
