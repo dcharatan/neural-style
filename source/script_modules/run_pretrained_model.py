@@ -11,13 +11,13 @@ import os
 import shutil
 import time
 
-# MODEL_PATH = "results/mosaic/final_model.pth"
-MODEL_PATH = "results/nude/final_model.pth"
+MODEL_PATH = "results/mosaic/final_model.pth"
+# MODEL_PATH = "results/nude/final_model.pth"
 NORMALIZE = True
 INPUT_PATH = "tmp_james.jpg"
 OUTPUT_PATH = "tmp_style_james.jpg"
-VIDEO_IN = "test/"
-VIDEO_OUT = "result/"
+VIDEO_IN = "test/kiki.flv"
+VIDEO_OUT = "result/kiki.mp4"
 TMP_DIR = "tmp"
 IMAGE_WIDTH = 800  # 767 // 2
 IMAGE_HEIGHT = 600  # 1025 // 2
@@ -60,21 +60,25 @@ if __name__ == "__main__":
 
     if args["video"]:
         video_clip = VideoFileClip(VIDEO_IN, audio=False)
+        audio_clip = AudioFileClip(VIDEO_IN)
         current_directory = os.getcwd()
         tmp_directory = os.path.join(current_directory, TMP_DIR)
-        os.makedirs(tmp_directory)
+        if not os.path.exists(tmp_directory):
+            os.makedirs(tmp_directory)
 
         for i, frame in enumerate(video_clip.iter_frames()):
-            frame = get_numpy_transform(frame)
+            frame = get_numpy_transform(frame).unsqueeze(0)
             pred = model(frame.to(device)).cpu().detach().numpy()[0]
-            save_image(tmp_directory + "/" + str(i).zfill(5) + ".png")
-
-        ImageSequenceClip(
+            save_image(tmp_directory + "/" + str(i).zfill(5) + ".png", pred)
+        
+        video = ImageSequenceClip(
             sequence=tmp_directory + "/", fps=video_clip.fps
-        ).write_videofile(VIDEO_OUT)
+        )
+        video = video.set_audio(audio_clip)
+        video.write_videofile(VIDEO_OUT, audio=True)
         shutil.rmtree(tmp_directory + "/")
 
-    if args["webcam"]:
+    elif args["webcam"]:
         # webcam mode, process frames in webcam stream
         cv2.startWindowThread()
         cv2.namedWindow("frame")
