@@ -10,6 +10,7 @@ from ..models.StylizationModel import StylizationModel
 from ..models.FeatureLossModel import FeatureLossModel
 from .. import util
 from ..SettingsLoader import SettingsLoader
+from tqdm import tqdm
 
 # Load the settings and make folders for the results.
 settings = SettingsLoader.load_settings_from_argv()
@@ -52,7 +53,9 @@ optimizer = Adam(style_model.parameters(), settings["learning_rate"])
 style_model.train()
 for e in range(settings["num_epochs"]):
     epoch_start_time = time.time()
-    for batch_index, (images, _) in enumerate(train_loader):
+    for batch_index, (images, _) in tqdm(
+        enumerate(train_loader), total=len(train_loader)
+    ):
         # The image x is normalized to [0, 1].
         batch_start_time = time.time()
         x = images.to(device)
@@ -93,12 +96,8 @@ for e in range(settings["num_epochs"]):
 
         # Print a status message.
         if batch_index % settings["print_status_every"] == 0:
-            print("===============================")
-            print(
-                f"Batch {b_str} of {train_loader_len} took {time.time() - batch_start_time} seconds."
-            )
-            print(f"Feature loss: {feature_loss.data.item()}")
-            print(f"Style loss: {style_loss.data.item()}")
+            tqdm.write(f"[{b_str}] Feature loss: {feature_loss.data.item()}")
+            tqdm.write(f"[{b_str}] Style loss: {style_loss.data.item()}\n")
 
         # Save intermediate images.
         if batch_index % settings["save_image_every"] == 0:
