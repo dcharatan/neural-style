@@ -23,3 +23,9 @@ To create a virtual environment, run `python3 -m venv venv`. Then, do `source ve
 
 - The style `action.jpg` is from Pinterest user [Gene Miller](https://www.pinterest.com/vilstef01/_saved/). It can be found [here](https://i.pinimg.com/originals/07/d9/60/07d960c5db5d25176b379ee615fd624e.jpg).
 - The styles `mosaic.jpg` and `udnie.jpg` are from the [fast-neural-style-pytorch](https://github.com/rrmina/fast-neural-style-pytorch) repository.
+- The style `elbe.jpg` is a painting of Dresden by Bernardo Bellotto.
+- The style `cafe.jpg` is Café Terrace at Night by Vincent Van Gogh.
+- The style `wave.jpg` is The Great Wave off Kanagawa by Katsushika Hokusai.
+- The style `nude.jpg` is Nude Descending a Staircase, No. 2 by Marcel Duchamp.
+- The style `haring.jpg` is Retrospect by Keith Haring.
+- The style `sitter.jpg` is Juan Legua by Juan Gris.
