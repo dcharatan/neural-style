@@ -11,15 +11,16 @@ import os
 import shutil
 import time
 
-MODEL_PATH = "results/mosaic/final_model.pth"
-NORMALIZE = False
-INPUT_PATH = "test/stadt.jpg"
-OUTPUT_PATH = "result/test1.jpg"
+# MODEL_PATH = "results/mosaic/final_model.pth"
+MODEL_PATH = "results/nude/final_model.pth"
+NORMALIZE = True
+INPUT_PATH = "tmp_james.jpg"
+OUTPUT_PATH = "tmp_style_james.jpg"
 VIDEO_IN = "test/"
 VIDEO_OUT = "result/"
 TMP_DIR = "tmp"
-IMAGE_WIDTH = 800
-IMAGE_HEIGHT = 600
+IMAGE_WIDTH = 800  # 767 // 2
+IMAGE_HEIGHT = 600  # 1025 // 2
 
 resize = tf.Compose(
     [

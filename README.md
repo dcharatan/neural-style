@@ -32,6 +32,6 @@ To create a virtual environment, run `python3 -m venv venv`. Then, do `source ve
 - The style `elbe.jpg` is a painting of Dresden by Bernardo Bellotto.
 - The style `cafe.jpg` is Café Terrace at Night by Vincent Van Gogh.
 - The style `wave.jpg` is The Great Wave off Kanagawa by Katsushika Hokusai.
-- The style `nude.jpg` is Nude Descending a Staircase, No. 2 by Marcel Duchamp.
+- The style `stairs.jpg` is Nude Descending a Staircase, No. 2 by Marcel Duchamp.
 - The style `haring.jpg` is Retrospect by Keith Haring.
 - The style `sitter.jpg` is Juan Legua by Juan Gris.

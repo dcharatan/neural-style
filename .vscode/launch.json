@@ -9,19 +9,20 @@
             "type": "python",
             "request": "launch",
             "module": "source.script_modules.train_model",
+            "args": ["--file_name", "settings/wave.json"]
         },
         {
             "name": "Run Pre-trained Model",
             "type": "python",
             "request": "launch",
-            "module": "source.script_modules.run_pretrained_model",
-            "args": ["--webcam"]
+            "module": "source.script_modules.run_pretrained_model"
         },
         {
             "name": "Make Image Grid",
             "type": "python",
             "request": "launch",
             "module": "source.script_modules.make_image_grid",
+            "args": ["--file_name", "settings/nude.json"]
         },
     ]
 }
