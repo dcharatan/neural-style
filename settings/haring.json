@@ -1,0 +1,7 @@
+{
+  "feature_weight": 1,
+  "style_weight": 5000,
+  "results_folder": "results/haring",
+  "style_image": "style/haring.jpg",
+  "per_channel_normalize": true
+}
