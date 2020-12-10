@@ -6,11 +6,15 @@ from typing import Optional
 
 
 def per_channel_normalize(x: torch.Tensor):
-    if x.ndim != 3:
-        raise Exception("not implemented")
-    mu = torch.mean(x, dim=[1, 2])
-    std = torch.std(x, dim=[1, 2])
-    return 0.5 + (x - mu[:, None, None]) / (2 * std[:, None, None])
+    if x.ndim == 3:
+        mu = torch.mean(x, dim=[1, 2])
+        std = torch.std(x, dim=[1, 2])
+        return 0.5 + (x - mu[:, None, None]) / (2 * std[:, None, None])
+    elif x.ndim == 4:
+        mu = torch.mean(x, dim=[2, 3])
+        std = torch.std(x, dim=[2, 3])
+        return 0.5 + (x - mu[:, :, None, None]) / (2 * std[:, :, None, None])
+    raise Exception("not implemented")
 
 
 def get_data_loader_transform(image_size: int):

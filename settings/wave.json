@@ -1,0 +1,7 @@
+{
+  "feature_weight": 1,
+  "style_weight": 40000,
+  "results_folder": "results/wave",
+  "style_image": "style/wave.jpg",
+  "per_channel_normalize": true
+}

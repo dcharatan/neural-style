@@ -1,3 +1,4 @@
+from source.image import per_channel_normalize
 from source.layers.UpsampleBlock import UpsampleBlock
 import torch
 import torch.nn as nn
@@ -10,7 +11,7 @@ class StylizationModel(nn.Module):
     https://cs.stanford.edu/people/jcjohns/papers/fast-style/fast-style-supp.pdf
     """
 
-    def __init__(self, block_dim=128) -> None:
+    def __init__(self, normalize) -> None:
         super(StylizationModel, self).__init__()
 
         self.down_convolution = nn.Sequential(
@@ -29,8 +30,11 @@ class StylizationModel(nn.Module):
             nn.ReLU(),
             ConvolutionBlock(32, 3, 9, 1),
         )
+        self.normalize = normalize
 
     def forward(self, image: torch.Tensor):
+        if self.normalize:
+            image = per_channel_normalize(image)
         x = self.down_convolution(image)
         x = self.residual(x)
         x = self.up_convolution(x)

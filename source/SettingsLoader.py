@@ -16,6 +16,7 @@ class SettingsLoader:
         "save_model_every": 1000,
         "save_image_every": 25,
         "print_status_every": 50,
+        "per_channel_normalize": False,
     }
 
     @staticmethod

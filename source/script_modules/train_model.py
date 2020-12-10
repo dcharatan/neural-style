@@ -31,7 +31,7 @@ make_folder(with_folder("intermediate_models"))
 device = torch.device("cpu")
 if torch.cuda.is_available():
     device = torch.device("cuda")
-style_model = StylizationModel().to(device)
+style_model = StylizationModel(settings["per_channel_normalize"]).to(device)
 feature_model = FeatureLossModel([(1, 2), (2, 2), (3, 3), (4, 3)]).to(device)
 
 # Set up the data loader.
