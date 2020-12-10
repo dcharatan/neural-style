@@ -1,0 +1,13 @@
+{
+    "image_size": 256,
+    "batch_size": 4,
+    "learning_rate": 1e-3,
+    "num_epochs": 1,
+    "feature_weight": 1,
+    "style_weight": 20000,
+    "results_folder": "results/mosaic",
+    "style_image": "style/mosaic.jpg",
+    "save_model_every": 1000,
+    "save_image_every": 25,
+    "print_status_every": 50
+}
