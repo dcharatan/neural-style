@@ -145,3 +145,6 @@ tmp*
 
 # Data set
 train2017/
+
+# Intermediate training files
+intermediate*/
