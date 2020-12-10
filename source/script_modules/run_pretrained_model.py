@@ -11,7 +11,8 @@ import os
 import shutil
 import time
 
-MODEL_PATH = "saved_models/mosaic_30k.pth"
+MODEL_PATH = "results/mosaic/final_model.pth"
+NORMALIZE = False
 INPUT_PATH = "test/stadt.jpg"
 OUTPUT_PATH = "result/test1.jpg"
 VIDEO_IN = "test/"
@@ -26,6 +27,10 @@ resize = tf.Compose(
         tf.CenterCrop((IMAGE_HEIGHT, IMAGE_WIDTH)),
     ]
 )
+
+device = torch.device("cpu")
+if torch.cuda.is_available():
+    device = torch.device("cuda")
 
 if __name__ == "__main__":
     # Parse arguments
@@ -47,9 +52,10 @@ if __name__ == "__main__":
     args = vars(arg_parser.parse_args())
 
     # Load the pre-trained model.
-    model = StylizationModel()
+    model = StylizationModel(NORMALIZE)
     model.load_state_dict(torch.load(MODEL_PATH))
     model.eval()
+    model = model.to(device)
 
     if args["video"]:
         video_clip = VideoFileClip(VIDEO_IN, audio=False)
@@ -59,7 +65,7 @@ if __name__ == "__main__":
 
         for i, frame in enumerate(video_clip.iter_frames()):
             frame = get_numpy_transform(frame)
-            pred = model(frame).detach().numpy()[0]
+            pred = model(frame.to(device)).cpu().detach().numpy()[0]
             save_image(tmp_directory + "/" + str(i).zfill(5) + ".png")
 
         ImageSequenceClip(
@@ -78,11 +84,11 @@ if __name__ == "__main__":
             cap.release()
             image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image = load_image(None, Image.fromarray(image))
-            image = resize(image)
+            image = resize(image.to(device))
 
             # Evaluate the model.
             t = time.time()
-            output_test = model(image).detach().numpy()
+            output_test = model(image).cpu().detach().numpy()
             print(f"Evaluating model took {time.time() - t} seconds.")
 
             # Send the result to the display.
@@ -102,5 +108,5 @@ if __name__ == "__main__":
         # Run the image through the model.
         image = load_image(INPUT_PATH)
         image = resize(image)
-        output_test = model(image).detach().numpy()
+        output_test = model(image.to(device)).cpu().detach().numpy()
         save_image(OUTPUT_PATH, output_test[0, :, :, :])
